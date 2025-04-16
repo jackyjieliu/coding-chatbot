@@ -57,7 +57,7 @@ async function startChat() {
   const systemMessage = createSystemMessage(files);
 
 
-  console.log("systemMessage.length", systemMessage.length);
+  // console.log("systemMessage.length", systemMessage.length);
 
   const messages = [
     { role: 'system', content: systemMessage }
