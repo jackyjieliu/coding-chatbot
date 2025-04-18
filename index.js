@@ -4,8 +4,14 @@ const readline = require('readline');
 const { OpenAI } = require('openai');
 const chalk = require('chalk').default;
 const { highlight } = require('cli-highlight');
+const { marked } = require('marked');
+const TerminalRenderer = require('marked-terminal').default;
 
 require('dotenv').config();
+
+marked.setOptions({
+  renderer: new TerminalRenderer()
+});
 
 function formatReply(reply) {
   return reply.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
@@ -14,7 +20,7 @@ function formatReply(reply) {
   });
 }
 
-const folderPath = process.env.FOLDER_PATH;
+const folderPaths = process.env.FOLDER_PATHS.split(',').map(p => p.trim());
 const model = process.env.MODEL;
 
 const openai = new OpenAI({
@@ -53,7 +59,16 @@ function createSystemMessage(files) {
 
 // Start CLI
 async function startChat() {
-  const files = readFilesRecursively(folderPath);
+
+  let files = [];
+  folderPaths.forEach(folder => {
+    if (fs.existsSync(folder)) {
+      files = files.concat(readFilesRecursively(folder));
+    } else {
+      console.warn(`Folder not found: ${folder}`);
+    }
+  });
+
   const systemMessage = createSystemMessage(files);
 
 
@@ -81,7 +96,8 @@ async function startChat() {
 
       const reply = response.choices[0].message.content;
       messages.push({ role: 'assistant', content: reply });
-      console.log("\nBot:\n" + formatReply(reply));
+      // console.log("\nBot:\n" + formatReply(reply));
+      console.log("\nBot:\n" + marked(reply));
     } catch (err) {
       console.error("Error:", err);
     }
